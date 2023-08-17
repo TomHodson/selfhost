@@ -1,0 +1,14 @@
+selfhost.local {
+    root * /site
+    file_server browse
+
+    handle /miniflux* {
+        reverse_proxy miniflux:8080
+    }
+    handle_path /octoprint* {
+        reverse_proxy octoprint {
+            header_up X-Scheme {scheme}
+            header_up X-Script-Name "/octoprint"
+        }
+}
+}

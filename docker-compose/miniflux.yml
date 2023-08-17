@@ -1,0 +1,73 @@
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    container_name: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - ../tomhodson.github.com/_site:/site
+  miniflux:
+    image: ${MINIFLUX_IMAGE:-miniflux/miniflux:latest}
+    container_name: miniflux
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://miniflux:secret@db/miniflux?sslmode=disable
+      - RUN_MIGRATIONS=1
+      - CREATE_ADMIN=1
+      - ADMIN_USERNAME=tom
+      - ADMIN_PASSWORD=loulou
+      - BASE_URL=https://selfhost.local/miniflux
+  db:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=miniflux
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - ../data/miniflux:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "miniflux"]
+      interval: 10s
+      start_period: 30s
+
+# convert different websites to RSS feed, mainly for In the Pipeline atm
+  rsshub:
+      # image: diygod/rsshub
+      image: diygod/rsshub:chromium-bundled
+      # build:
+      #   context: /Users/math/git/RSSHub
+      #   dockerfile: /Users/math/git/RSSHub/Dockerfile 
+      restart: always
+      ports:
+          - '1200:1200'
+      environment:
+          NODE_ENV: production
+          CACHE_TYPE: redis
+          REDIS_URL: 'redis://redis:6379/'
+
+      depends_on:
+          - redis
+
+
+  redis:
+      image: redis:alpine
+      restart: always
+      volumes:
+          - redis-data:/data
+
+volumes:
+  caddy_data:
+  caddy_config:
+  redis-data:
+
+networks:
+  network1:
+    name: tom_default
+    external: true
