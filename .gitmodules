@@ -1,3 +1,6 @@
 [submodule "tomhodson.github.com"]
 	path = tomhodson.github.com
 	url = git@github.com:TomHodson/tomhodson.github.com.git
+[submodule "uk_rentals_bot"]
+	path = uk_rentals_bot
+	url = git@github.com:TomHodson/uk_rentals_bot.git
